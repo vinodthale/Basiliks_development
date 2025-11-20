@@ -1,0 +1,56 @@
+# Build artifacts
+*.o
+*.a
+*.so
+*.dylib
+
+# Executables
+qcc
+grammar
+codeblock
+literate-c
+pagemagic
+sanitize
+urldecode
+kdtquery
+xyz2kdt
+
+# Basilisk build files
+basilisk/src/config
+basilisk/src/Makefile.deps
+basilisk/src/Makefile.tests
+basilisk/src/qcc
+basilisk/src/*.o
+basilisk/src/**/*.o
+basilisk/src/**/*.a
+basilisk/src/ast/grammar
+basilisk/src/ast/grammar.h
+basilisk/src/darcsit/codeblock
+basilisk/src/darcsit/literate-c
+basilisk/src/darcsit/pagemagic
+basilisk/src/darcsit/sanitize
+basilisk/src/darcsit/urldecode
+basilisk/src/kdt/kdtquery
+basilisk/src/kdt/xyz2kdt
+
+# Test executables
+Basic_Axi/basic-axi-embed
+Basic_Axi/test-embed-axi-adapt
+
+# Simulation output
+intermediate/
+Images/
+dump
+*.dump
+*.mp4
+*.png
+
+# Editor/IDE files
+.vscode/
+.idea/
+*.swp
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
