@@ -1,0 +1,41 @@
+======== GDB Cheat Sheet for Basilisk Debugging ========
+
+▶ Start GDB with executable and optional core dump:
+    gdb ./Bdropimpactembed core
+
+▶ Useful commands inside GDB:
+--------------------------------------------------------
+  run                # Start the program
+  bt or backtrace    # Show the call stack
+  frame              # Show current frame info
+  list               # Show source code near the crash
+  info locals        # Show local variables in the frame
+  print varname      # Print value of a variable (e.g. print f[])
+
+▶ Step through code:
+  step               # Step into a function
+  next               # Next line (don’t enter functions)
+  continue           # Resume execution
+
+▶ Debug tips:
+--------------------------------------------------------
+  set pagination off     # Disable paging in GDB
+  set print pretty on    # Prettify complex output
+
+▶ Example to debug NaNs:
+--------------------------------------------------------
+  print y
+  print Delta
+  print sig
+  print ff
+  print cs[]
+  print fs.x[]
+
+▶ Enable core dumps (run before crash occurs):
+    ulimit -c unlimited
+
+▶ Exit GDB:
+    quit
+=========================================================
+
+

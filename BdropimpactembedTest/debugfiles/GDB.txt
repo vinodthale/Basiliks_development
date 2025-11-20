@@ -1,0 +1,47 @@
+#!/bin/bash
+ulimit -c unlimited
+qcc -Wall -O0 -g -disable-dimensions -DTRASH=1 Bdropimpactembed.c -o Bdropimpactembed -lm
+./Bdropimpactembed
+
+
+#gdb Bdropimpactembed core
+(gdb) run
+
+Starting program: /DATA1/IITH/Vinod/Basliks_devopment_code/Wavysurfaec/solid/V8/Bdropimpactembed 
+[Thread debugging using libthread_db enabled]
+Using host libthread_db library "/lib/x86_64-linux-gnu/libthread_db.so.1".
+[Detaching after vfork from child process 528399]
+
+Program received signal SIGFPE, Arithmetic exception.
+0x00005555555c9a64 in refine_face_x_axi (point=..., fm=...) at /home/vinod/basilisk/src/axi.h:68
+68	    fine(fm,0,0) = (y - Delta/4. - sig*(1. - ff))*ff;
+(gdb) print y
+$1 = 0.015625
+(gdb) print Delta
+$2 = 0.03125
+(gdb) print ff
+$3 = nan(0x000000001)
+(gdb) print sig
+$4 = 0
+(gdb) 
+
+
+ff is NaN at this point, causing the SIGFPE when used in arithmetic.
+What can cause ff to be NaN?
+
+Since y, Delta, and sig are fine, the root cause is how ff is computed before this line in refine_face_x_axi.
+Next step: find where ff is assigned or calculated in refine_face_x_axi.
+
+Could you please paste the full function refine_face_x_axi (or at least the few lines before and including line 68) from /home/vinod/basilisk/src/axi.h?
+
+This will help analyze how ff is derived and why it might be NaN.
+Meanwhile, generic causes of NaN include:
+
+    Division by zero
+
+    Taking sqrt, log, or inverse trig functions of invalid arguments
+
+    Using uninitialized variables
+
+    Invalid memory reads
+
