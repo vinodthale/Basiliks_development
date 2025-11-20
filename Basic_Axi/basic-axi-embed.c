@@ -157,20 +157,52 @@ event properties (i++) {
 /**
 ## Adaptive mesh refinement
 
-Adapt the grid based on velocity and geometry. */
+Adapt the grid based on velocity and geometry.
+
+IMPORTANT: When adapting with embedded boundaries in axisymmetric coordinates,
+the metric fields (cm, fm) must be recalculated from (cs, fs) after each
+adaptation. This is because cm and fm are derived quantities, not independent
+fields. The correct sequence is:
+
+1. Adapt cs and fs (geometry)
+2. Recalculate cm from cs, fs using cm_update()
+3. Recalculate fm from cs, fs using fm_update()
+4. Apply restriction to propagate to coarser grid levels
+
+This automated process eliminates the need for manual intervention when
+implementing C files with EMBED + AXI + ADAPT. */
 
 event adapt (i++) {
   double utol = 1e-3;   // Velocity adaptation tolerance
   double ctol = 1e-3;   // Geometry adaptation tolerance
 
   /**
-  Adapt based on velocity components and geometry.
-  Also refine/coarsen the metric fields (cs, fs, cm, fm). */
+  Step 1: Adapt based on velocity components and geometry.
+  Include cs and fs in the refinement list. */
 
   adapt_wavelet ({u.x, u.y, cs},
                  (double[]){utol, utol, ctol},
                  maxlevel,
-                 list = {cs, fs, cm, fm});
+                 list = {cs, fs});
+
+  /**
+  Step 2: After adaptation, recalculate the metric fields from the
+  updated geometry. This is CRITICAL for embedded + axi simulations.
+
+  cm_update: Recalculates cell volume fractions (cm) from the
+             updated solid fraction fields (cs, fs)
+
+  fm_update: Recalculates face area fractions (fm) from the
+             updated solid fraction fields (cs, fs) */
+
+  cm_update (cm, cs, fs);
+  fm_update (fm, cs, fs);
+
+  /**
+  Step 3: Apply restriction to propagate the updated metrics to
+  coarser grid levels in the multigrid hierarchy. */
+
+  restriction ({cs, fs, cm, fm});
 }
 
 /**

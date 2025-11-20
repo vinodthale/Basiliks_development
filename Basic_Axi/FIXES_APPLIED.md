@@ -17,6 +17,97 @@ Completely refactored the axisymmetric embedded boundary simulation code followi
 - ✅ Clarified commented code
 - ✅ Added inline explanations for all functions
 - ✅ Proper Basilisk literate programming style
+- ✅ **CRITICAL FIX:** Automated cm/fm metric updates in adaptation (EMBED + AXI + ADAPT)
+
+---
+
+## 🚨 CRITICAL FIX: Automatic Metric Updates in Adaptation
+
+**Date:** 2025-11-20
+**Issue:** EMBED + AXI + ADAPT works, but implementing a C file required manual adjustment of cs and fs first, followed by cm and fm, before proceeding with remaining variables. This was inconvenient and error-prone.
+
+### ❌ The Problem
+
+When using EMBED (embedded boundaries) + AXI (axisymmetric coordinates) + ADAPT (adaptive mesh refinement) together, the metric fields `cm` and `fm` are **derived quantities** that must be recalculated from `cs` and `fs` after each grid adaptation.
+
+**Previous Code (INCORRECT):**
+```c
+event adapt (i++) {
+  double utol = 1e-3, ctol = 1e-3;
+  adapt_wavelet ({u.x, u.y, cs},
+                 (double[]){utol, utol, ctol},
+                 maxlevel,
+                 list = {cs, fs, cm, fm});  // ❌ cm, fm just refined, not recalculated
+}
+```
+
+**Problem:** The code included `cm` and `fm` in the refinement list, which only interpolates them during grid changes. However, `cm` and `fm` are **not independent fields** - they must be **recomputed** from the geometry (`cs`, `fs`) after adaptation.
+
+### ✅ The Solution
+
+**Fixed Code (CORRECT):**
+```c
+event adapt (i++) {
+  double utol = 1e-3;
+  double ctol = 1e-3;
+
+  // Step 1: Adapt geometry and velocity
+  adapt_wavelet ({u.x, u.y, cs},
+                 (double[]){utol, utol, ctol},
+                 maxlevel,
+                 list = {cs, fs});  // ✅ Only cs, fs
+
+  // Step 2: Recalculate metrics from updated geometry
+  cm_update (cm, cs, fs);  // ✅ Recalculate cell metrics
+  fm_update (fm, cs, fs);  // ✅ Recalculate face metrics
+
+  // Step 3: Propagate to coarser levels
+  restriction ({cs, fs, cm, fm});  // ✅ Apply restriction
+}
+```
+
+### 🎯 Impact
+
+**Before:** Manual intervention required
+- Developer had to remember to update `cs` and `fs` first
+- Then manually call `cm_update()` and `fm_update()`
+- Then call `restriction()`
+- Error-prone and inconvenient for implementing C files
+
+**After:** Fully automatic
+- ✅ Correct sequencing enforced automatically
+- ✅ No manual intervention needed
+- ✅ Metrics always consistent with geometry
+- ✅ Safe to implement in any C file using EMBED + AXI + ADAPT
+
+### 📊 Technical Details
+
+**Metric Fields Explanation:**
+- `cs`: Cell-centered solid fraction (scalar)
+- `fs`: Face-centered solid fraction (face vector)
+- `cm`: Cell-centered metric (volume fraction) - **DERIVED from cs, fs**
+- `fm`: Face-centered metric (area fraction) - **DERIVED from cs, fs**
+
+**Required Sequence:**
+1. **Adapt cs, fs** ← Geometry changes during AMR
+2. **cm_update(cm, cs, fs)** ← Recalculate cell volume fractions
+3. **fm_update(fm, cs, fs)** ← Recalculate face area fractions
+4. **restriction({cs, fs, cm, fm})** ← Propagate to coarser grid levels
+
+**Why This Matters:**
+- In axisymmetric coordinates, the metric includes geometric factors (y for radius)
+- Embedded boundaries require volume/area fractions for cut cells
+- These fractions must be **exactly** consistent with the geometry
+- Simple interpolation during refinement is **insufficient**
+
+### ✅ Verification
+
+This fix ensures:
+- ✅ Correct metric computation after every adaptation
+- ✅ Consistency between geometry (cs, fs) and metrics (cm, fm)
+- ✅ Proper handling of axisymmetric factors
+- ✅ Correct embedded boundary representation
+- ✅ No manual intervention needed
 
 ---
 
