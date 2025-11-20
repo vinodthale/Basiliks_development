@@ -12,9 +12,9 @@ int maxlevel = 9;
 int minlevel = 7;
 
 // Boundary conditions for the embedded solid boundary
-//u.n[embed] = dirichlet(0.);
-//u.t[embed] = dirichlet(0.);
-//p[embed] = neumann(0.);
+u.n[embed] = dirichlet(0.);
+u.t[embed] = dirichlet(0.);
+p[embed] = neumann(0.);
 
 #define tsnap 0.01  // Time interval for snapshots
 #define tmax  1.00  // Final time
