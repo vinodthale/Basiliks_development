@@ -155,7 +155,10 @@ static void sweep_x (scalar c, scalar tmp_c, scalar mark, scalar contact_angle, 
       double s = sign(uf.x[]), tfm = 1.;
       int i = -(s + 1.)/2.;
       
-      
+      /**
+      For embedded cells, compute the time fraction multiplier to handle
+      small cell CFL restrictions. This prevents the timestep from being
+      overly restricted by very small cut cells. */
       if ((cs[i]>0. && cs[i]<1. && fs.x[]>0)){
         double tun = fabs(uf.x[]*dt/(Delta + SEPS));
 
@@ -174,9 +177,14 @@ static void sweep_x (scalar c, scalar tmp_c, scalar mark, scalar contact_angle, 
 
         tfm = tun/(tfmun+SEPS);
 
+        /**
+        Limit tfm to reasonable bounds to prevent numerical instabilities.
+        Too small tfm would cause excessively large CFL numbers. */
+        tfm = max(tfm, 1e-2);
+
       }
 
-      
+
       double un = uf.x[]*dt/(Delta*tfm + SEPS);
 
       if (cs[] >= 1.){
