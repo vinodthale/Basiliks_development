@@ -60,7 +60,11 @@ static void vof_concentration_refine (Point point, scalar s)
 
 event defaults (i = 0)
 {
+  /**
+  Set up refinement, prolongation and restriction for interfaces and tracers.
+  This is required for TREE grids (AMR). */
 
+#if TREE
   for (scalar c in interfaces) {
     c.refine = c.prolongation = fraction_refine;
     c.dirty = true;
@@ -72,14 +76,11 @@ event defaults (i = 0)
       t.c = c;
     }
   }
-
-
-}
 #endif // TREE
 
-
-event defaults (i = 0)
-{
+  /**
+  Set up dependencies between tracers and their volume fraction fields.
+  This is required for all grid types. */
 
   for (scalar c in interfaces) {
     scalar * tracers = c.tracers;

@@ -24,6 +24,8 @@ of the interface are given by
 ~~~
 */
 
+#include <math.h>
+
 #define HSHIFT 20.
 
 static inline double height (double H) {
@@ -312,7 +314,7 @@ void heights (scalar c, scalar mark, vector h)
           int aax=(int)hhx;
           if (fabs(hhx - aax)==0.5)
             h.x[]=nodata;
-          else if (fabs(h.x[]) > 100)
+          else if (fabs(hhx) > 100)
             h.x[]=nodata;
         }
      }
@@ -489,14 +491,16 @@ void heights (scalar c, scalar mark, vector h)
       if (ii==0)
         h.x[]=nodata;
 
-      
+      /**
+      Check for invalid height function values. Heights with fractional
+      part exactly 0.5 or absolute values > 100 are considered invalid. */
 
-       if (fabs(h.x[]) != nodata){
+       if (h.x[] != nodata){
           double hhx = h.x[];
          int aax=(int)hhx;
          if (fabs(hhx - aax)==0.5)
             h.x[]=nodata;
-          else if (fabs(h.x[])>100)
+          else if (fabs(hhx)>100)
             h.x[]=nodata;
         }
         

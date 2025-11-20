@@ -506,8 +506,11 @@ These two vectors are computed by the *embed_force()* function.
 trace
 void embed_force (scalar p, vector u, face vector mu, coord * Fp, coord * Fmu)
 {
+  /**
+  Compute forces exerted by fluid on embedded boundary.
+  Uses reduction to sum contributions from all cells containing boundary fragments. */
   coord Fps = {0}, Fmus = {0};
-  foreach (reduction(+:Fps) reduction(+:Fmus), nowarning)
+  foreach (reduction(+:Fps) reduction(+:Fmus))
     if (cs[] > 0. && cs[] < 1.) {
 
       /**

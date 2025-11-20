@@ -42,6 +42,9 @@ double csTL = max(1e-2, VFTL);
 #define mu02      7.5e-4
 #define sigma0    0.1
 
+/**
+Boundary conditions for velocity: no-slip (Dirichlet) on all boundaries
+including the embedded solid boundary. */
 u.t[embed]  = dirichlet(0.);
 u.n[embed]  = dirichlet(0.);
 
@@ -54,17 +57,29 @@ u.t[top]    = dirichlet(0.);
 u.n[right]  = dirichlet(0.);
 u.t[right]  = dirichlet(0.);
 
-
 u.n[left]   = dirichlet(0.);
-u.t[left]   = neumann(0.);
+u.t[left]   = dirichlet(0.);
 
+/**
+Boundary conditions for volume fraction fields:
+- Left: symmetry (Neumann)
+- Bottom: solid wall (Dirichlet)
+- Right/Top: outflow or symmetry (Neumann) */
 f[left] = neumann(0.);
 cs[left] = neumann(0.);
 tmp_c[left] = neumann(0.);
 
-cs[bottom] = 1.;
-f[bottom] = 0.;
-tmp_c[bottom] = 0.;
+f[right] = neumann(0.);
+cs[right] = neumann(0.);
+tmp_c[right] = neumann(0.);
+
+f[top] = neumann(0.);
+cs[top] = neumann(0.);
+tmp_c[top] = neumann(0.);
+
+cs[bottom] = dirichlet(1.);
+f[bottom] = dirichlet(0.);
+tmp_c[bottom] = dirichlet(0.);
 
 int main()
 {
@@ -128,6 +143,15 @@ event movie (t += tend/300.)
 event adapt (i++) {
   scalar sf1[];
   foreach() {
+#if dimension == 2
+    /**
+    In 2D, use a 9-point stencil for smoothing the adaptation criterion. */
+    sf1[] = (8. * tmp_c[] +
+       4. * (tmp_c[-1] + tmp_c[1] + tmp_c[0, 1] + tmp_c[0, -1]) +
+       2. * (tmp_c[-1, 1] + tmp_c[-1, -1] + tmp_c[1, 1] + tmp_c[1, -1])) / 32.;
+#else // dimension == 3
+    /**
+    In 3D, use a 27-point stencil for smoothing the adaptation criterion. */
     sf1[] = (8. * tmp_c[] +
        4. * (tmp_c[-1] + tmp_c[1] +
        tmp_c[0, 1] + tmp_c[0, -1] +
@@ -137,6 +161,7 @@ event adapt (i++) {
        tmp_c[1, 1] + tmp_c[1, 0, 1] + tmp_c[1, -1] + tmp_c[1, 0, -1]) +
        tmp_c[1, -1, 1] + tmp_c[-1, 1, 1] + tmp_c[-1, 1, -1] + tmp_c[1, 1, 1] +
        tmp_c[1, 1, -1] + tmp_c[-1, -1, -1] + tmp_c[1, -1, -1] + tmp_c[-1, -1, 1]) / 64.;
+#endif
     sf1[] += cs[];
   }
   adapt_wavelet ({sf1}, (double[]){1e-5}, minlevel = max(3, MAXLEVEL - 7), maxlevel = MAXLEVEL);
