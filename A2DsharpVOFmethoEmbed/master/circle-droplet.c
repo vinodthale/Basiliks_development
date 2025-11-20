@@ -128,6 +128,15 @@ event movie (t += tend/300.)
 event adapt (i++) {
   scalar sf1[];
   foreach() {
+#if dimension == 2
+    /**
+    In 2D, use a 9-point stencil for smoothing the adaptation criterion. */
+    sf1[] = (8. * tmp_c[] +
+       4. * (tmp_c[-1] + tmp_c[1] + tmp_c[0, 1] + tmp_c[0, -1]) +
+       2. * (tmp_c[-1, 1] + tmp_c[-1, -1] + tmp_c[1, 1] + tmp_c[1, -1])) / 32.;
+#else // dimension == 3
+    /**
+    In 3D, use a 27-point stencil for smoothing the adaptation criterion. */
     sf1[] = (8. * tmp_c[] +
        4. * (tmp_c[-1] + tmp_c[1] +
        tmp_c[0, 1] + tmp_c[0, -1] +
@@ -137,6 +146,7 @@ event adapt (i++) {
        tmp_c[1, 1] + tmp_c[1, 0, 1] + tmp_c[1, -1] + tmp_c[1, 0, -1]) +
        tmp_c[1, -1, 1] + tmp_c[-1, 1, 1] + tmp_c[-1, 1, -1] + tmp_c[1, 1, 1] +
        tmp_c[1, 1, -1] + tmp_c[-1, -1, -1] + tmp_c[1, -1, -1] + tmp_c[-1, -1, 1]) / 64.;
+#endif
     sf1[] += cs[];
   }
   adapt_wavelet ({sf1}, (double[]){1e-5}, minlevel = max(3, MAXLEVEL - 7), maxlevel = MAXLEVEL);
